@@ -1,0 +1,25 @@
+CLOSEST PAIR OF POINTS
+file                         n      distance      D&C ms    brute ms  pair
+closest_pair_01.txt        150       31.3124         0.7         2.2  (2634.437, 4976.024) (2664.661, 4984.208)
+closest_pair_02.txt        300       28.5058         1.4         9.8  (3795.432, 9657.979) (3805.819, 9631.433)
+closest_pair_03.txt        600       13.8641         5.3        37.2  (1571.42, 3672.085) (1583.545, 3678.808)
+closest_pair_04.txt       1200       11.4363         6.6       192.1  (3736.234, 4282.43) (3735.92, 4293.862)
+closest_pair_05.txt       2500        1.8074        14.4       694.8  (7116.876, 1239.242) (7117.522, 1237.554)
+closest_pair_06.txt       5000        3.7950        29.1      2693.3  (809.068, 6847.319) (811.679, 6844.565)
+closest_pair_07.txt      10000        0.9838        70.0     skipped  (6883.449, 5300.645) (6882.714, 5301.299)
+closest_pair_08.txt      20000        0.1475       213.6     skipped  (1867.371, 6968.162) (1867.35, 6968.308)
+closest_pair_09.txt      40000        0.0785       550.4     skipped  (8574.537, 1502.61) (8574.578, 1502.677)
+closest_pair_10.txt      80000        0.1396      1474.8     skipped  (1514.542, 3520.419) (1514.555, 3520.558)
+
+INTEGER MULTIPLICATION (KARATSUBA)
+file                    digits  product digits  Karatsuba ms  schoolbook ms  correct
+multiplication_01.txt      128             256           1.2            0.2  True
+multiplication_02.txt      256             512           3.9            0.3  True
+multiplication_03.txt      512            1024          11.2            1.4  True
+multiplication_04.txt     1024            2048          32.8            7.4  True
+multiplication_05.txt     2048            4096          98.6           44.2  True
+multiplication_06.txt     4096            8192         303.3          264.8  True
+multiplication_07.txt     8192           16383        1004.1         2078.0  True
+multiplication_08.txt    16384           32768        2933.9        10597.0  True
+multiplication_09.txt    32768           65536        8918.6        skipped  True
+multiplication_10.txt    65536          131071       29011.3        skipped  True

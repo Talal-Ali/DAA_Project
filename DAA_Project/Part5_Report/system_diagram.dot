@@ -1,0 +1,18 @@
+digraph G {
+  rankdir=LR; fontname="Helvetica"; node [fontname="Helvetica", fontsize=11, shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4f6fa8"]; edge [fontname="Helvetica", fontsize=9, color="#555555"];
+  gen [label="generate_inputs.py\n(seed 2026)"];
+  files [label="inputs/\n10 × closest_pair_XX.txt\n10 × multiplication_XX.txt", fillcolor="#fff6dd", color="#b08a2e"];
+  gen -> files;
+  subgraph cluster_core { label="Algorithm core (Python)"; style="rounded,dashed"; color="#999999"; fontname="Helvetica"; fontsize=10;
+    cp [label="closest_pair.py\nD&C  Θ(n log n)\n+ brute force check"];
+    ka [label="karatsuba.py\nD&C  Θ(n^1.585)\n+ built-in check"];
+  }
+  run [label="run_all.py\n(Part 3 benchmarks)\n→ results.txt", fillcolor="#e6f6ee", color="#2f8f5b"];
+  app [label="app.py\nHTTP server · records\nevery divide / conquer step", fillcolor="#e6f6ee", color="#2f8f5b"];
+  ui [label="index.html\nbrowser UI: file picker,\nstep player, canvas / SVG", fillcolor="#fde8ec", color="#b23b55"];
+  files -> cp; files -> ka;
+  cp -> run; ka -> run;
+  cp -> app; ka -> app;
+  app -> ui [label="JSON: steps + result"];
+  ui -> app [label="/files, /run?file=…"];
+}

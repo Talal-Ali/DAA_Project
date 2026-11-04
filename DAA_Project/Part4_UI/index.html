@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Divide & Conquer Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1420;--panel:#171d2b;--panel2:#1e2637;--line:#2a3447;--text:#e6eaf2;--muted:#8d97ad;--accent:#4f8cff;--accent2:#ff5c7a;--ok:#39c98f;--warn:#f4b942}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:grid;grid-template-columns:270px 1fr;overflow:hidden}
+aside{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+aside h1{font-size:15px;margin:0;padding:18px 18px 6px;letter-spacing:.3px}
+aside p.sub{margin:0 18px 14px;color:var(--muted);font-size:12px}
+.group{padding:8px 10px 2px 18px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.files{overflow:auto;flex:1;padding-bottom:12px}
+.file{display:flex;justify-content:space-between;align-items:center;padding:9px 18px;cursor:pointer;font-size:13px;border-left:3px solid transparent}
+.file:hover{background:var(--panel2)}
+.file.active{background:var(--panel2);border-left-color:var(--accent)}
+.file span{color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace}
+main{display:grid;grid-template-rows:auto 1fr auto;min-height:0;padding:16px 20px;gap:12px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header h2{margin:0;font-size:18px;font-weight:600}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--muted)}
+.chip b{color:var(--text);font-family:'JetBrains Mono',monospace;font-weight:600}
+.chip.ok b{color:var(--ok)}
+.stage{display:grid;grid-template-columns:1fr 360px;gap:12px;min-height:0}
+.viz{background:var(--panel);border:1px solid var(--line);border-radius:12px;position:relative;overflow:hidden;min-height:0}
+canvas,svg{width:100%;height:100%;display:block}
+.info{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;overflow:auto;font-size:13px;line-height:1.55}
+.info h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.info .big{font-size:20px;font-weight:600;margin-bottom:10px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;margin:8px 0 14px}
+.kv div:nth-child(odd){color:var(--muted)}
+.eq{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--panel2);border-radius:8px;padding:10px 12px;white-space:pre-wrap;word-break:break-all;margin-top:8px}
+.eq .hl{color:var(--accent)}
+.eq .r{color:var(--accent2)}
+.eq .g{color:var(--ok)}
+.controls{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit;font-size:13px}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;min-width:80px}
+input[type=range]{width:120px;accent-color:var(--accent)}
+.prog{flex:1;height:6px;background:var(--panel2);border-radius:3px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);width:0}
+.stepno{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);min-width:110px;text-align:right}
+.empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+.legend{position:absolute;left:12px;bottom:10px;display:flex;gap:14px;font-size:11px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--muted);font-size:12px}
+.product{font-family:'JetBrains Mono',monospace;font-size:11px;word-break:break-all;max-height:160px;overflow:auto;margin-top:6px;color:var(--muted)}
+</style>
+</head>
+<body>
+<aside>
+  <h1>Divide &amp; Conquer Visualizer</h1>
+  <p class="sub">CS302 · Closest pair of points &amp; Karatsuba multiplication</p>
+  <div class="files" id="files"></div>
+</aside>
+<main>
+  <header id="header"><h2>Select an input file</h2></header>
+  <div class="stage">
+    <div class="viz" id="viz"><div class="empty">Pick a file on the left to run the algorithm and watch it work.</div></div>
+    <div class="info" id="info"></div>
+  </div>
+  <div class="controls">
+    <button onclick="go(0)">⏮</button>
+    <button onclick="go(cur-1)">◀</button>
+    <button class="primary" id="playBtn" onclick="toggle()">Play</button>
+    <button onclick="go(cur+1)">▶</button>
+    <button onclick="go(steps.length-1)">⏭</button>
+    <span style="color:var(--muted);font-size:12px">speed</span><input type="range" id="speed" min="1" max="10" value="5">
+    <div class="prog"><i id="prog"></i></div>
+    <span class="stepno" id="stepno">step 0 / 0</span>
+  </div>
+</main>
+<script>
+let data=null,steps=[],cur=0,timer=null;
+const $=id=>document.getElementById(id);
+const fmt=(v,d=3)=>Number(v).toFixed(d);
+
+fetch('/files').then(r=>r.json()).then(fs=>{
+  const el=$('files');let group='';
+  fs.forEach(f=>{
+    const g=f.name.startsWith('closest')?'Closest pair of points':'Integer multiplication';
+    if(g!==group){group=g;el.insertAdjacentHTML('beforeend',`<div class="group">${g}</div>`)}
+    el.insertAdjacentHTML('beforeend',`<div class="file" data-n="${f.name}" onclick="load('${f.name}')">${f.name}<span>${(f.size/1024).toFixed(0)} KB</span></div>`);
+  });
+});
+
+async function load(name){
+  stop();
+  document.querySelectorAll('.file').forEach(e=>e.classList.toggle('active',e.dataset.n===name));
+  $('header').innerHTML=`<h2>${name}</h2><span class="chip">running…</span>`;
+  $('viz').innerHTML='<div class="empty">Running algorithm…</div>';$('info').innerHTML='';
+  data=await (await fetch('/run?file='+name)).json();
+  data.kind==='points'?setupPoints():setupInts();
+  go(0);
+}
+
+function toggle(){timer?stop():play()}
+function play(){if(cur>=steps.length-1)cur=-1;$('playBtn').textContent='Pause';tick()}
+function tick(){go(cur+1);if(cur>=steps.length-1)return stop();timer=setTimeout(tick,1100-$('speed').value*100)}
+function stop(){clearTimeout(timer);timer=null;$('playBtn').textContent='Play'}
+function go(i){cur=Math.max(0,Math.min(steps.length-1,i));$('stepno').textContent=`step ${cur+1} / ${steps.length}`;$('prog').style.width=(steps.length?(cur+1)/steps.length*100:0)+'%';render()}
+function render(){data&&(data.kind==='points'?drawPoints():drawInts())}
+
+let cv,ctx;
+function setupPoints(){
+  const r=data.result,b=data.brute;
+  steps=data.steps.concat([{type:'final'}]);
+  $('header').innerHTML=`<h2>${data.file}</h2><span class="chip">n = <b>${data.n}</b></span><span class="chip">D&amp;C time <b>${fmt(r.ms,1)} ms</b></span>`+
+    (b?`<span class="chip ok">brute force <b>${fmt(b.ms,1)} ms</b> · ${Math.abs(b.d-r.d)<1e-9?'match ✓':'MISMATCH'}</span>`:`<span class="chip">brute force skipped (n &gt; 5000)</span>`);
+  $('viz').innerHTML='<canvas id="cv"></canvas><div class="legend"><span><i style="background:#4f8cff"></i>dividing line</span><span><i style="background:#f4b942"></i>strip (width 2d)</span><span><i style="background:#ff5c7a"></i>closest pair</span></div>';
+  cv=$('cv');ctx=cv.getContext('2d');
+  new ResizeObserver(()=>{cv.width=cv.clientWidth*devicePixelRatio;cv.height=cv.clientHeight*devicePixelRatio;render()}).observe(cv);
+}
+function drawPoints(){
+  if(!cv.width)return;
+  const W=cv.width,H=cv.height,pad=28*devicePixelRatio,[x0,x1,y0,y1]=data.box;
+  const sx=x=>pad+(x-x0)/(x1-x0||1)*(W-2*pad),sy=y=>H-pad-(y-y0)/(y1-y0||1)*(H-2*pad);
+  ctx.clearRect(0,0,W,H);
+  const s=steps[cur],dpr=devicePixelRatio;
+  ctx.fillStyle='rgba(230,234,242,.55)';
+  const rad=data.n>5000?0.8*dpr:(data.n>1000?1.3*dpr:2*dpr);
+  for(const p of data.points){ctx.beginPath();ctx.arc(sx(p[0]),sy(p[1]),rad,0,7);ctx.fill()}
+  ctx.lineWidth=1*dpr;
+  for(let i=0;i<cur;i++){const t=steps[i];if(t.type==='split'){ctx.strokeStyle=`rgba(79,140,255,${Math.max(.12,.5-t.depth*.07)})`;ctx.beginPath();ctx.moveTo(sx(t.x),sy(t.box[2]));ctx.lineTo(sx(t.x),sy(t.box[3]));ctx.stroke()}}
+  const box=s.box;
+  if(box){ctx.strokeStyle='rgba(79,140,255,.9)';ctx.lineWidth=1.5*dpr;ctx.setLineDash([6*dpr,4*dpr]);ctx.strokeRect(sx(box[0]),sy(box[3]),sx(box[1])-sx(box[0]),sy(box[2])-sy(box[3]));ctx.setLineDash([])}
+  const pair=(p,q,col)=>{ctx.strokeStyle=col;ctx.lineWidth=2*dpr;ctx.beginPath();ctx.moveTo(sx(p[0]),sy(p[1]));ctx.lineTo(sx(q[0]),sy(q[1]));ctx.stroke();for(const t of[p,q]){ctx.beginPath();ctx.arc(sx(t[0]),sy(t[1]),6*dpr,0,7);ctx.stroke()}};
+  if(s.type==='split'){ctx.strokeStyle='#4f8cff';ctx.lineWidth=2.5*dpr;ctx.beginPath();ctx.moveTo(sx(s.x),sy(box[2]));ctx.lineTo(sx(s.x),sy(box[3]));ctx.stroke()}
+  if(s.type==='base'){ctx.fillStyle='#f4b942';for(const p of s.pts){ctx.beginPath();ctx.arc(sx(p[0]),sy(p[1]),4*dpr,0,7);ctx.fill()}if(s.pair[0])pair(s.pair[0],s.pair[1],'#ff5c7a')}
+  if(s.type==='strip'){
+    const w=Math.max(1,(sx(s.x+s.d)-sx(s.x)));
+    ctx.fillStyle='rgba(244,185,66,.18)';ctx.fillRect(sx(s.x)-w,sy(box[3]),2*w,sy(box[2])-sy(box[3]));
+    ctx.strokeStyle='#f4b942';ctx.lineWidth=1*dpr;ctx.strokeRect(sx(s.x)-w,sy(box[3]),2*w,sy(box[2])-sy(box[3]));
+    ctx.fillStyle='#f4b942';for(const p of s.strip){ctx.beginPath();ctx.arc(sx(p[0]),sy(p[1]),3*dpr,0,7);ctx.fill()}
+    pair(s.pair[0],s.pair[1],s.improved?'#39c98f':'#ff5c7a');
+  }
+  if(s.type==='final'){const r=data.result;pair(r.pair[0],r.pair[1],'#ff5c7a');ctx.fillStyle='#ff5c7a';for(const t of r.pair){ctx.beginPath();ctx.arc(sx(t[0]),sy(t[1]),4*dpr,0,7);ctx.fill()}}
+  infoPoints(s);
+}
+function infoPoints(s){
+  const r=data.result;let h=`<h3>Closest pair · divide &amp; conquer</h3>`;
+  if(s.type==='split')h+=`<div class="big">Divide</div>Subproblem with <b>${s.n}</b> points (depth ${s.depth}). Split at the median x so both halves have ${Math.floor(s.n/2)} / ${s.n-Math.floor(s.n/2)} points.<div class="kv"><div>line x =</div><div>${fmt(s.x)}</div><div>region</div><div>[${fmt(s.box[0],0)}, ${fmt(s.box[1],0)}] × [${fmt(s.box[2],0)}, ${fmt(s.box[3],0)}]</div></div>`;
+  if(s.type==='base')h+=`<div class="big">Base case</div>Only <b>${s.pts.length}</b> points left, so compare every pair directly (≤ 3 pairs).<div class="kv"><div>best d</div><div>${isFinite(s.d)?fmt(s.d):'∞ (single point)'}</div></div>`;
+  if(s.type==='strip')h+=`<div class="big">Conquer · strip check</div>Left half gave d<sub>L</sub> = ${fmt(s.dl)}, right half gave d<sub>R</sub> = ${fmt(s.dr)}, so d = <b>${fmt(s.d)}</b>. Only points within d of the line can beat it, scanned in y-order with ≤ 7 neighbours each.<div class="kv"><div>strip points</div><div>${s.stripN}</div><div>pairs checked</div><div>${s.checked}</div><div>result</div><div>${s.improved?`<span style="color:var(--ok)">improved to ${fmt(s.best)}</span>`:`unchanged ${fmt(s.best)}`}</div></div>`;
+  if(s.type==='final')h+=`<div class="big">Done</div><div class="kv"><div>distance</div><div>${fmt(r.d,4)}</div><div>point 1</div><div>(${fmt(r.pair[0][0])}, ${fmt(r.pair[0][1])})</div><div>point 2</div><div>(${fmt(r.pair[1][0])}, ${fmt(r.pair[1][1])})</div><div>time</div><div>${fmt(r.ms,1)} ms</div>${data.brute?`<div>brute force</div><div>${fmt(data.brute.d,4)} in ${fmt(data.brute.ms,1)} ms</div>`:''}</div>T(n) = 2T(n/2) + Θ(n) ⇒ Θ(n log n). Steps shown down to depth 5; deeper levels are solved but not animated.`;
+  $('info').innerHTML=h;
+}
+
+let nodes=[];
+function setupInts(){
+  const r=data.result;
+  steps=[];nodes=[];
+  (function walk(n,depth,parent){n.id=nodes.length;n.depth=depth;n.parent=parent;nodes.push(n);
+    if(n.base){steps.push({node:n,phase:'base'});return}
+    steps.push({node:n,phase:'split'});
+    if(n.children)n.children.forEach(c=>walk(c,depth+1,n));else steps.push({node:n,phase:'deeper'});
+    steps.push({node:n,phase:'combine'});
+  })(data.tree,0,null);
+  const leaves=nodes.filter(n=>!n.children||n.base);let li=0;
+  (function pos(n){if(!n.children||n.base){n.x=(li+++.5)/leaves.length;return}n.children.forEach(pos);n.x=(n.children[0].x+n.children[2].x)/2})(data.tree);
+  $('header').innerHTML=`<h2>${data.file}</h2><span class="chip">digits <b>${data.digits[0]} × ${data.digits[1]}</b></span><span class="chip">Karatsuba <b>${fmt(r.ms,1)} ms</b></span><span class="chip ${r.correct?'ok':''}">vs built-in <b>${r.correct?'correct ✓':'WRONG'}</b></span>`+(data.calls?`<span class="chip">recursive calls <b>${data.calls}</b></span>`:'');
+  $('viz').innerHTML='<svg id="svg"></svg><div class="legend"><span><i style="background:#4f8cff"></i>current call</span><span><i style="background:#39c98f"></i>solved</span><span><i style="background:#2a3447"></i>pending</span></div>';
+}
+function drawInts(){
+  const svg=$('svg'),W=svg.clientWidth,H=svg.clientHeight,s=steps[cur];
+  const done=new Set();for(let i=0;i<cur;i++){const t=steps[i];if(t.phase==='combine'||t.phase==='base')done.add(t.node.id)}
+  const px=n=>30+n.x*(W-60),py=n=>50+n.depth*((H-110)/3);
+  let h='';
+  for(const n of nodes)if(n.parent)h+=`<line x1="${px(n.parent)}" y1="${py(n.parent)}" x2="${px(n)}" y2="${py(n)}" stroke="${done.has(n.id)?'#39c98f':'#2a3447'}" stroke-width="1.5"/>`;
+  for(const n of nodes){
+    const isCur=n.id===s.node.id,fill=isCur?'#4f8cff':done.has(n.id)?'#39c98f':'#1e2637';
+    const r=n.depth===0?26:n.depth===1?20:n.depth===2?15:11;
+    h+=`<circle cx="${px(n)}" cy="${py(n)}" r="${r}" fill="${fill}" stroke="${isCur?'#fff':'#2a3447'}" stroke-width="${isCur?2.5:1}"/>`;
+    h+=`<text x="${px(n)}" y="${py(n)+4}" text-anchor="middle" font-size="${n.depth>2?9:11}" fill="${fill==='#1e2637'?'#8d97ad':'#fff'}" font-family="JetBrains Mono">${n.base?'1':n.n}</text>`;
+  }
+  h+=`<text x="${W/2}" y="${H-34}" text-anchor="middle" font-size="11" fill="#8d97ad" font-family="Inter">node label = number of digits · each call spawns 3 half-size calls · tree shown to depth 3</text>`;
+  svg.innerHTML=h;
+  infoInts(s);
+}
+function infoInts(s){
+  const n=s.node,r=data.result;let h=`<h3>Karatsuba · ${n.depth===0?'top-level call':'depth '+n.depth}</h3>`;
+  if(s.phase==='split')h+=`<div class="big">Divide</div>Split both ${n.n}-digit numbers at h = ${n.h} digits: x = a·10<sup>h</sup> + b, y = c·10<sup>h</sup> + d.<div class="eq">x = <span class="hl">${n.x}</span>\ny = <span class="hl">${n.y}</span>\n\na = ${n.a}\nb = ${n.b}\nc = ${n.c}\nd = ${n.d}</div>Three recursive products instead of four: ac, bd, (a+b)(c+d).`;
+  if(s.phase==='base')h+=`<div class="big">Base case</div>A single digit — multiply directly.<div class="eq">${n.x} × ${n.y} = <span class="r">${n.result}</span></div>`;
+  if(s.phase==='deeper')h+=`<div class="big">Recursing…</div>The three sub-calls below depth 3 run the same way; their results come back as ac, bd and (a+b)(c+d).`;
+  if(s.phase==='combine')h+=`<div class="big">Conquer · combine</div><div class="eq">ac          = ${n.ac}\nbd          = ${n.bd}\n(a+b)(c+d)  = ${n.sum}\nad+bc       = (a+b)(c+d) − ac − bd\n            = <span class="g">${n.mid}</span>\n\nx·y = ac·10<sup>${2*n.h}</sup> + (ad+bc)·10<sup>${n.h}</sup> + bd\n    = <span class="r">${n.result}</span></div>`;
+  if(n.depth===0&&s.phase==='combine')h+=`<div class="kv"><div>product digits</div><div>${r.digits}</div><div>Karatsuba</div><div>${fmt(r.ms,1)} ms</div><div>built-in check</div><div>${r.correct?'identical ✓':'mismatch'}</div></div>M(n) = 3M(n/2) + Θ(n) ⇒ Θ(n<sup>log₂3</sup>) ≈ Θ(n<sup>1.585</sup>)<details><summary>full product (${r.digits} digits)</summary><div class="product">${r.product}</div></details>`;
+  $('info').innerHTML=h;
+}
+</script>
+</body>
+</html>
